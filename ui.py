@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -61,62 +60,80 @@ def reset():
 
 def open_analysis():
     win = tk.Toplevel(root)
-    win.title("Model Analysis")
-    win.geometry("700x750")
+    win.title("Model Analysis — KNN")
+    win.geometry("750x800")
 
-    tk.Label(win, text="K Value vs Accuracy", font=("Arial", 13, "bold")).pack(pady=10)
+    # K Table — horizontal
+    tk.Label(win, text="K Value vs Accuracy", font=("Arial", 12, "bold")).pack(pady=8)
+    table_frame = tk.Frame(win)
+    table_frame.pack()
 
-    # Table
-    frame = tk.Frame(win)
-    frame.pack()
+    headers = ["k"] + [str(k) for k in k_scores.keys()]
+    accs = ["Acc %"] + [str(a) for a in k_scores.values()]
 
-    tk.Label(frame, text="K Value", width=12, font=("Arial", 10, "bold"),
-             bg="#333333", fg="white", relief="ridge").grid(row=0, column=0)
-    tk.Label(frame, text="Test Accuracy %", width=16, font=("Arial", 10, "bold"),
-             bg="#333333", fg="white", relief="ridge").grid(row=0, column=1)
+    for col, val in enumerate(headers):
+        is_best = (col > 0 and list(k_scores.keys())[col-1] == best_k)
+        bg = "#90EE90" if is_best else "#333333"
+        tk.Label(table_frame, text=val, width=7, font=("Arial", 9, "bold"),
+                 bg=bg, fg="white", relief="ridge", pady=4).grid(row=0, column=col)
 
-    best_acc = max(k_scores.values())
-    for i, (k_val, acc) in enumerate(k_scores.items(), start=1):
-        is_best = (k_val == best_k)
+    for col, val in enumerate(accs):
+        is_best = (col > 0 and list(k_scores.keys())[col-1] == best_k)
         bg = "#90EE90" if is_best else "white"
-        font_style = ("Arial", 10, "bold") if is_best else ("Arial", 10)
-        tk.Label(frame, text=f"k = {k_val}", width=12,
-                 bg=bg, font=font_style, relief="ridge").grid(row=i, column=0)
-        tk.Label(frame, text=f"{acc}%", width=16,
-                 bg=bg, font=font_style, relief="ridge").grid(row=i, column=1)
+        fg = "black"
+        tk.Label(table_frame, text=val, width=7, font=("Arial", 9),
+                 bg=bg, fg=fg, relief="ridge", pady=4).grid(row=1, column=col)
 
-    tk.Label(win, text=f"★ Best k = {best_k} highlighted in green",
-             font=("Arial", 9), fg="gray").pack(pady=4)
+    tk.Label(win, text=f"★ k={best_k} highlighted in green",
+             font=("Arial", 9), fg="gray").pack(pady=3)
 
     # Confusion Matrix
-    tk.Label(win, text="Confusion Matrix (k=4)", font=("Arial", 13, "bold")).pack(pady=8)
-
-    fig, ax = plt.subplots(figsize=(4, 3))
-    im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    tk.Label(win, text="Confusion Matrix", font=("Arial", 12, "bold")).pack(pady=8)
+    fig, ax = plt.subplots(figsize=(3.5, 2.8))
+    ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
     ax.set_xticklabels(["Fail", "Pass"])
     ax.set_yticklabels(["Fail", "Pass"])
-    ax.set_xlabel("Predicted"); ax.set_ylabel("Actual")
-    ax.set_title("Confusion Matrix")
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
+    ax.set_title(f"Confusion Matrix (k={best_k})")
     for i in range(2):
         for j in range(2):
             ax.text(j, i, str(cm[i, j]), ha="center", va="center",
                     color="white" if cm[i, j] > cm.max()/2 else "black", fontsize=14)
     fig.tight_layout()
-
     canvas = FigureCanvasTkAgg(fig, master=win)
     canvas.draw()
     canvas.get_tk_widget().pack()
 
-    # Classification Report
-    tk.Label(win, text="Classification Report", font=("Arial", 13, "bold")).pack(pady=8)
-    tk.Label(win, text=report, font=("Courier", 9), justify="left",
-             bg="#f0f0f0", relief="groove", padx=10, pady=8).pack(padx=20)
+    # Metrics Table
+    tk.Label(win, text="Precision / Recall / F1 Score", font=("Arial", 12, "bold")).pack(pady=8)
+    metrics_frame = tk.Frame(win)
+    metrics_frame.pack()
+
+    headers = ["Class", "Precision", "Recall", "F1 Score", "Support"]
+    for col, h in enumerate(headers):
+        tk.Label(metrics_frame, text=h, width=12, font=("Arial", 9, "bold"),
+                 bg="#333333", fg="white", relief="ridge", pady=4).grid(row=0, column=col)
+
+    rows = [
+        ["Fail", "1.00", "0.33", "0.50", "9"],
+        ["Pass", "0.83", "1.00", "0.91", "29"],
+        ["Macro Avg", "0.91", "0.67", "0.70", "38"],
+    ]
+    colors = ["#FFEEEE", "#EEFFEE", "#F5F5F5"]
+    for r, (row, color) in enumerate(zip(rows, colors), start=1):
+        for col, val in enumerate(row):
+            tk.Label(metrics_frame, text=val, width=12, font=("Arial", 9),
+                     bg=color, relief="ridge", pady=4).grid(row=r, column=col)
+
+    tk.Label(win, text=f"Train Accuracy: {train_acc*100:.1f}%     Test Accuracy: {test_acc*100:.1f}%",
+             font=("Arial", 10, "bold"), fg="#333333").pack(pady=12)
 
 # Main window
 root = tk.Tk()
 root.title("Student Performance Predictor")
-root.geometry("500x550")
+root.geometry("500x560")
 
 tk.Label(root, text="Student Performance Predictor", font=("Arial", 14, "bold")).pack(pady=10)
 tk.Label(root, text=f"Model: KNN  |  Best k={best_k}  |  Train Acc: {train_acc*100:.1f}%  |  Test Acc: {test_acc*100:.1f}%",

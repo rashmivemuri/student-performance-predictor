@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier as knn
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 
 def train_model():
@@ -14,7 +14,6 @@ def train_model():
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    # collect accuracy for every even k
     k_scores = {}
     for k_val in range(2, 21, 2):
         m = knn(n_neighbors=k_val)
